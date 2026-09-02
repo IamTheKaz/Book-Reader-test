@@ -100,7 +100,8 @@ export async function detectWords(
   const scale = prepared.scale || 1;
   const words: PageWord[] = [];
   for (const raw of result.data.words ?? []) {
-    const text = cleanOcrText(raw.text ?? "");
+    const rawText = (raw.text ?? "").trim();
+    const text = cleanOcrText(rawText);
     if (!text) continue;
     if (!/[\p{L}\p{N}]/u.test(text)) continue;
     if (raw.confidence < 38) continue;
@@ -113,6 +114,7 @@ export async function detectWords(
     words.push({
       id: crypto.randomUUID(),
       text,
+      rawText: rawText || text,
       phonetic: null,
       bbox: { x0, y0, x1, y1 },
       confidence: raw.confidence,

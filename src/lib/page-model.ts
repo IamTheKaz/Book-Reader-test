@@ -8,6 +8,7 @@ export type BBox = {
 export type PageWord = {
   id: string;
   text: string;
+  rawText?: string;
   phonetic: string | null;
   bbox: BBox;
   confidence: number;
@@ -117,9 +118,27 @@ function sortLines(words: PageWord[]): PageWord[] {
   return lines.flatMap((line) => line.sort((a, b) => a.bbox.x0 - b.bbox.x0));
 }
 
+export function getSpokenWordText(word: PageWord): string {
+  const baseText = word.phonetic?.trim() || word.text;
+  const raw = word.rawText?.trim();
+  if (!raw) return baseText;
+
+  const leadingPunct = raw.match(/^[^\p{L}\p{N}]+/u)?.[0] ?? "";
+  const trailingPunct = raw.match(/[^\p{L}\p{N}'’-]+$/u)?.[0] ?? "";
+
+  let result = baseText;
+  if (leadingPunct && !result.startsWith(leadingPunct)) {
+    result = `${leadingPunct}${result}`;
+  }
+  if (trailingPunct && !result.endsWith(trailingPunct)) {
+    result = `${result}${trailingPunct}`;
+  }
+  return result;
+}
+
 export function assembledSentence(words: PageWord[], layout: PageLayout, pageWidth: number): string {
   return sortReadingOrder(words, layout, pageWidth)
-    .map((w) => w.text)
+    .map((w) => getSpokenWordText(w))
     .join(" ")
     .trim();
 }
@@ -143,11 +162,28 @@ export function buildSpeechPlan(
       const key = normalizeToken(raw);
       const match = words.find((w) => !used.has(w.id) && normalizeToken(w.text) === key);
       if (match) used.add(match.id);
-      const speak = (match?.phonetic?.trim() || (match ? match.text : raw)).trim();
+
+      let speak: string;
+      if (match?.phonetic?.trim()) {
+        const leadingPunct = raw.match(/^[^\p{L}\p{N}]+/u)?.[0] ?? "";
+        const trailingPunct = raw.match(/[^\p{L}\p{N}'’-]+$/u)?.[0] ?? "";
+        const p = match.phonetic.trim();
+        let formatted = p;
+        if (leadingPunct && !formatted.startsWith(leadingPunct)) {
+          formatted = `${leadingPunct}${formatted}`;
+        }
+        if (trailingPunct && !formatted.endsWith(trailingPunct)) {
+          formatted = `${formatted}${trailingPunct}`;
+        }
+        speak = formatted;
+      } else {
+        speak = raw;
+      }
+
       const start = cursor;
       const end = start + speak.length;
       tokens.push({
-        display: match?.text ?? raw,
+        display: match?.text ?? cleanOcrText(raw),
         speak,
         wordId: match?.id ?? null,
         start,
@@ -163,7 +199,7 @@ export function buildSpeechPlan(
   const tokens: SpeechToken[] = [];
   let cursor = 0;
   for (const word of ordered) {
-    const speak = (word.phonetic?.trim() || word.text).trim();
+    const speak = getSpokenWordText(word);
     const start = cursor;
     const end = start + speak.length;
     tokens.push({
@@ -176,7 +212,7 @@ export function buildSpeechPlan(
     cursor = end + 1;
   }
   const spoken = tokens.map((t) => t.speak).join(" ");
-  const displaySentence = ordered.map((w) => w.text).join(" ");
+  const displaySentence = tokens.map((t) => t.speak).join(" ");
   return { spoken, tokens, displaySentence };
 }
 

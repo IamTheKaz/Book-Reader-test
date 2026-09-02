@@ -6,7 +6,7 @@ import { t as Slot } from "../_libs/radix-ui__react-slot.mjs";
 import { n as clsx, t as cva } from "../_libs/class-variance-authority+clsx.mjs";
 import { t as twMerge } from "../_libs/tailwind-merge.mjs";
 import { t as create } from "../_libs/zustand.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-CbyD6bIE.js
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-DKbSD-nv.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 function cn(...inputs) {
@@ -100,8 +100,19 @@ function sortLines(words) {
 	});
 	return lines.flatMap((line) => line.sort((a, b) => a.bbox.x0 - b.bbox.x0));
 }
+function getSpokenWordText(word) {
+	const baseText = word.phonetic?.trim() || word.text;
+	const raw = word.rawText?.trim();
+	if (!raw) return baseText;
+	const leadingPunct = raw.match(/^[^\p{L}\p{N}]+/u)?.[0] ?? "";
+	const trailingPunct = raw.match(/[^\p{L}\p{N}'’-]+$/u)?.[0] ?? "";
+	let result = baseText;
+	if (leadingPunct && !result.startsWith(leadingPunct)) result = `${leadingPunct}${result}`;
+	if (trailingPunct && !result.endsWith(trailingPunct)) result = `${result}${trailingPunct}`;
+	return result;
+}
 function assembledSentence(words, layout, pageWidth) {
-	return sortReadingOrder(words, layout, pageWidth).map((w) => w.text).join(" ").trim();
+	return sortReadingOrder(words, layout, pageWidth).map((w) => getSpokenWordText(w)).join(" ").trim();
 }
 /**
 * Build a spoken plan. Override text (if any) is the TTS source; detected boxes
@@ -117,11 +128,19 @@ function buildSpeechPlan(words, layout, pageWidth, sentenceOverride) {
 			const key = normalizeToken(raw);
 			const match = words.find((w) => !used.has(w.id) && normalizeToken(w.text) === key);
 			if (match) used.add(match.id);
-			const speak = (match?.phonetic?.trim() || (match ? match.text : raw)).trim();
+			let speak;
+			if (match?.phonetic?.trim()) {
+				const leadingPunct = raw.match(/^[^\p{L}\p{N}]+/u)?.[0] ?? "";
+				const trailingPunct = raw.match(/[^\p{L}\p{N}'’-]+$/u)?.[0] ?? "";
+				let formatted = match.phonetic.trim();
+				if (leadingPunct && !formatted.startsWith(leadingPunct)) formatted = `${leadingPunct}${formatted}`;
+				if (trailingPunct && !formatted.endsWith(trailingPunct)) formatted = `${formatted}${trailingPunct}`;
+				speak = formatted;
+			} else speak = raw;
 			const start = cursor;
 			const end = start + speak.length;
 			tokens.push({
-				display: match?.text ?? raw,
+				display: match?.text ?? cleanOcrText(raw),
 				speak,
 				wordId: match?.id ?? null,
 				start,
@@ -139,7 +158,7 @@ function buildSpeechPlan(words, layout, pageWidth, sentenceOverride) {
 	const tokens = [];
 	let cursor = 0;
 	for (const word of ordered) {
-		const speak = (word.phonetic?.trim() || word.text).trim();
+		const speak = getSpokenWordText(word);
 		const start = cursor;
 		const end = start + speak.length;
 		tokens.push({
@@ -154,7 +173,7 @@ function buildSpeechPlan(words, layout, pageWidth, sentenceOverride) {
 	return {
 		spoken: tokens.map((t) => t.speak).join(" "),
 		tokens,
-		displaySentence: ordered.map((w) => w.text).join(" ")
+		displaySentence: tokens.map((t) => t.speak).join(" ")
 	};
 }
 function tokenAtChar(tokens, charIndex) {
@@ -278,7 +297,8 @@ async function detectWords(src, onProgress) {
 	const scale = prepared.scale || 1;
 	const words = [];
 	for (const raw of result.data.words ?? []) {
-		const text = cleanOcrText(raw.text ?? "");
+		const rawText = (raw.text ?? "").trim();
+		const text = cleanOcrText(rawText);
 		if (!text) continue;
 		if (!/[\p{L}\p{N}]/u.test(text)) continue;
 		if (raw.confidence < 38) continue;
@@ -291,6 +311,7 @@ async function detectWords(src, onProgress) {
 		words.push({
 			id: crypto.randomUUID(),
 			text,
+			rawText: rawText || text,
 			phonetic: null,
 			bbox: {
 				x0,
@@ -375,7 +396,7 @@ function canSpeak() {
 function speakText(text, options) {
 	cancelSpeech();
 	const spoken = text.trim();
-	const rate = options?.rate ?? .92;
+	const rate = options?.rate ?? .75;
 	let cancelled = false;
 	const timeouts = [];
 	let utterance = null;
@@ -643,7 +664,7 @@ var usePageStore = create((set, get) => ({
 			kind: "word",
 			wordId: id
 		} });
-		speakText(text, { rate: .88 }).done.then(() => {
+		speakText(text, { rate: .75 }).done.then(() => {
 			const current = get().playback;
 			if (current.kind === "word" && current.wordId === id) set({ playback: {
 				kind: "idle",
@@ -666,7 +687,7 @@ var usePageStore = create((set, get) => ({
 			hasPreviewed: true
 		});
 		speakText(plan.spoken, {
-			rate: .92,
+			rate: .75,
 			tokens: plan.tokens,
 			onToken: (token) => {
 				if (get().playback.kind !== "sentence") return;

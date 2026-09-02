@@ -215,7 +215,7 @@ export const usePageStore = create<PageStore>((set, get) => ({
     if (!word) return;
     const text = word.phonetic?.trim() || word.text;
     set({ playback: { kind: "word", wordId: id } });
-    const handle = speakText(text, { rate: 0.88 });
+    const handle = speakText(text, { rate: 0.5 });
     void handle.done.then(() => {
       const current = get().playback;
       if (current.kind === "word" && current.wordId === id) {
@@ -236,7 +236,7 @@ export const usePageStore = create<PageStore>((set, get) => ({
       hasPreviewed: true,
     });
     const handle = speakText(plan.spoken, {
-      rate: 0.92,
+      rate: 0.5,
       tokens: plan.tokens,
       onToken: (token) => {
         const current = get().playback;

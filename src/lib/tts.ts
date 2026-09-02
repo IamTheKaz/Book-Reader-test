@@ -62,7 +62,7 @@ export function speakText(
 ): SpeechHandle {
   cancelSpeech();
   const spoken = text.trim();
-  const rate = options?.rate ?? 0.92;
+  const rate = options?.rate ?? 0.5;
   let cancelled = false;
   const timeouts: number[] = [];
   let utterance: SpeechSynthesisUtterance | null = null;
