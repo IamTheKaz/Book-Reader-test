@@ -2,16 +2,13 @@ import { o as __toESM } from "../_runtime.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { v as require_jsx_runtime } from "../_libs/@tanstack/react-router+[...].mjs";
 import { a as LoaderCircle, c as Check, i as Play, l as BookOpen, o as ListOrdered, r as Square, s as ImagePlus, t as Volume2 } from "../_libs/lucide-react.mjs";
+import { t as cva } from "../_libs/class-variance-authority+clsx.mjs";
+import { n as assetUrl, r as cn } from "./router-0pIKDZpF.mjs";
 import { t as Slot } from "../_libs/radix-ui__react-slot.mjs";
-import { n as clsx, t as cva } from "../_libs/class-variance-authority+clsx.mjs";
-import { t as twMerge } from "../_libs/tailwind-merge.mjs";
 import { t as create } from "../_libs/zustand.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-D6BN95SU.js
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-CyUa1uPO.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
-function cn(...inputs) {
-	return twMerge(clsx(inputs));
-}
 var buttonVariants = cva("inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[opacity,transform,background-color,box-shadow,color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 btn-press", {
 	variants: {
 		variant: {
@@ -256,7 +253,7 @@ async function getWorker() {
 	workerPromise = (async () => {
 		const { createWorker, PSM } = await import("../_libs/tesseract.js.mjs").then((n) => /* @__PURE__ */ __toESM(n.t()));
 		const worker = await createWorker("eng", 1, {
-			workerPath: "/tesseract-worker.min.js",
+			workerPath: assetUrl("/tesseract-worker.min.js"),
 			corePath: "https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1",
 			langPath: "https://tessdata.projectnaptha.com/4.0.0",
 			logger: (message) => {
@@ -341,7 +338,7 @@ function fileToDataUrl(file) {
 	});
 }
 async function samplePageDataUrl() {
-	const response = await fetch("/sample-page.png");
+	const response = await fetch(assetUrl("/sample-page.png"));
 	if (!response.ok) throw new Error("Sample page is missing.");
 	const blob = await response.blob();
 	return {
