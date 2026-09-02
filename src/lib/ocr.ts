@@ -1,4 +1,5 @@
 import { cleanOcrText, type PageWord } from "@/lib/page-model";
+import { assetUrl } from "@/lib/utils";
 
 export type OcrProgress = {
   status: string;
@@ -58,7 +59,7 @@ async function getWorker(): Promise<import("tesseract.js").Worker> {
   workerPromise = (async () => {
     const { createWorker, PSM } = await import("tesseract.js");
     const worker = await createWorker("eng", 1, {
-      workerPath: "/tesseract-worker.min.js",
+      workerPath: assetUrl("/tesseract-worker.min.js"),
       corePath: "https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1",
       langPath: "https://tessdata.projectnaptha.com/4.0.0",
       logger: (message) => {
@@ -137,7 +138,7 @@ export function fileToDataUrl(file: File): Promise<string> {
 }
 
 export async function samplePageDataUrl(): Promise<{ src: string; name: string }> {
-  const response = await fetch("/sample-page.png");
+  const response = await fetch(assetUrl("/sample-page.png"));
   if (!response.ok) throw new Error("Sample page is missing.");
   const blob = await response.blob();
   const src = await new Promise<string>((resolve, reject) => {
