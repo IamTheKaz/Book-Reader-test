@@ -7,9 +7,12 @@ const SERVER_ENTRY = join(ROOT, ".vercel/output/functions/__server.func/index.mj
 const OUT_DIR = join(ROOT, "dist-gh-pages");
 
 async function buildGhPages() {
-  console.log("[gh-pages] Rendering static index.html from build server entry...");
+  const repoName = process.env.GITHUB_REPOSITORY ? process.env.GITHUB_REPOSITORY.split("/")[1] : "";
+  const basePath = repoName ? `/${repoName}/` : "/";
+  const url = `http://localhost${basePath}`;
+  console.log(`[gh-pages] Rendering static index.html from build server entry at ${url}...`);
   const server = await import(SERVER_ENTRY);
-  const req = new Request("http://localhost/", {
+  const req = new Request(url, {
     headers: { accept: "text/html" },
   });
   const res = await server.default.fetch(req);

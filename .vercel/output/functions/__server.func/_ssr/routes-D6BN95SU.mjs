@@ -6,7 +6,7 @@ import { t as Slot } from "../_libs/radix-ui__react-slot.mjs";
 import { n as clsx, t as cva } from "../_libs/class-variance-authority+clsx.mjs";
 import { t as twMerge } from "../_libs/tailwind-merge.mjs";
 import { t as create } from "../_libs/zustand.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-DKbSD-nv.js
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-D6BN95SU.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 function cn(...inputs) {
@@ -396,7 +396,7 @@ function canSpeak() {
 function speakText(text, options) {
 	cancelSpeech();
 	const spoken = text.trim();
-	const rate = options?.rate ?? .75;
+	const rate = options?.rate ?? .5;
 	let cancelled = false;
 	const timeouts = [];
 	let utterance = null;
@@ -664,7 +664,7 @@ var usePageStore = create((set, get) => ({
 			kind: "word",
 			wordId: id
 		} });
-		speakText(text, { rate: .75 }).done.then(() => {
+		speakText(text, { rate: .5 }).done.then(() => {
 			const current = get().playback;
 			if (current.kind === "word" && current.wordId === id) set({ playback: {
 				kind: "idle",
@@ -687,7 +687,7 @@ var usePageStore = create((set, get) => ({
 			hasPreviewed: true
 		});
 		speakText(plan.spoken, {
-			rate: .75,
+			rate: .5,
 			tokens: plan.tokens,
 			onToken: (token) => {
 				if (get().playback.kind !== "sentence") return;
