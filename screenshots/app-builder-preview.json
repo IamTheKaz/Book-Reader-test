@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Page Aloud",
+      "hasCanvas": false,
+      "bodyTextLen": 529,
+      "bodyTextHash": "5a5532805446388840e6d4f681f429faa4cbd58b2b6af4e67f9617fa0834237b",
+      "bodyTextPrefix": "Page Aloud Teacher page review Upload / Detect / Review / Previe",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Page Aloud",
+      "hasCanvas": false,
+      "bodyTextLen": 529,
+      "bodyTextHash": "5a5532805446388840e6d4f681f429faa4cbd58b2b6af4e67f9617fa0834237b",
+      "bodyTextPrefix": "Page Aloud Teacher page review Upload / Detect / Review / Previe",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}
