@@ -59,7 +59,9 @@ async function getWorker(): Promise<import("tesseract.js").Worker> {
   workerPromise = (async () => {
     const { createWorker, PSM } = await import("tesseract.js");
     const worker = await createWorker("eng", 1, {
-      workerPath: assetUrl("/tesseract-worker.min.js"),
+      // The worker bootstraps via importScripts inside a blob: context, where
+      // root-relative URLs are invalid — give it an absolute URL.
+      workerPath: new URL(assetUrl("/tesseract-worker.min.js"), window.location.origin).href,
       corePath: "https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1",
       langPath: "https://tessdata.projectnaptha.com/4.0.0",
       logger: (message) => {
@@ -93,6 +95,10 @@ export async function detectWords(
   progressHandler = onProgress ?? null;
   onProgress?.({ status: "Opening the page image", progress: 0 });
   const image = await loadImage(src);
+  // Word boxes are mapped back to the source image's pixel space, so report
+  // the source dimensions — not the (possibly downscaled) OCR raster's.
+  const width = image.naturalWidth || image.width;
+  const height = image.naturalHeight || image.height;
   const prepared = await rasterForOcr(image);
   const worker = await getWorker();
   const result = await worker.recognize(prepared.canvas);
@@ -122,11 +128,13 @@ export async function detectWords(
       confirmed: false,
     });
   }
-  return { words, width: prepared.width, height: prepared.height };
+  return { words, width, height };
 }
 
+const MAX_STORE_EDGE = 1600;
+
 export function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === "string") resolve(reader.result);
@@ -134,6 +142,29 @@ export function fileToDataUrl(file: File): Promise<string> {
     };
     reader.onerror = () => reject(new Error("Could not read that file."));
     reader.readAsDataURL(file);
+  }).then(async (original) => {
+    // Downscale large photos so saved book libraries fit in local storage.
+    // Coordinates stay proportional, so word boxes still land correctly.
+    try {
+      const image = await loadImage(original);
+      const width = image.naturalWidth || image.width;
+      const height = image.naturalHeight || image.height;
+      const scale = Math.min(1, MAX_STORE_EDGE / Math.max(width, height));
+      if (scale >= 1 || width === 0 || height === 0) return original;
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(width * scale));
+      canvas.height = Math.max(1, Math.round(height * scale));
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return original;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL("image/jpeg", 0.85);
+    } catch {
+      return original;
+    }
   });
 }
 

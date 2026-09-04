@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type CSSProperties } from "react";
 import { LoaderCircle } from "lucide-react";
 import { WordPopover } from "@/components/word-popover";
 import { usePageStore } from "@/store/page-store";
@@ -23,11 +23,21 @@ export function PageCanvas() {
   const popoverBelow = selected
     ? selected.bbox.y1 < image.height * 0.62
     : true;
+  // Desktop-only anchored popover placement (percentage of the image).
+  const popoverStyle: CSSProperties | undefined = selected
+    ? {
+        left: `${Math.min(58, Math.max(1, (selected.bbox.x0 / image.width) * 100))}%`,
+        top: popoverBelow
+          ? `${(selected.bbox.y1 / image.height) * 100}%`
+          : `${(selected.bbox.y0 / image.height) * 100}%`,
+        transform: popoverBelow ? "translateY(8px)" : "translateY(calc(-100% - 8px))",
+      }
+    : undefined;
 
   return (
     <div className="relative">
       <div
-        className="relative inline-block max-w-full"
+        className="relative inline-block max-w-full touch-manipulation select-none"
         onPointerDown={() => {
           if (!running) selectWord(null, false);
         }}
@@ -67,24 +77,26 @@ export function PageCanvas() {
           })}
 
         {selected && image.width > 0 && (
-          <div
-            className="absolute z-20 w-[min(18.5rem,calc(100%-0.5rem))]"
-            style={{
-              left: `${Math.min(
-                58,
-                Math.max(1, (selected.bbox.x0 / image.width) * 100),
-              )}%`,
-              top: popoverBelow
-                ? `${(selected.bbox.y1 / image.height) * 100}%`
-                : `${(selected.bbox.y0 / image.height) * 100}%`,
-              transform: popoverBelow
-                ? "translateY(8px)"
-                : "translateY(calc(-100% - 8px))",
-            }}
-            onPointerDown={(event) => event.stopPropagation()}
-          >
-            <WordPopover word={selected} />
-          </div>
+          <>
+            {/* Phones: editing a word needs room, so dock it as a bottom sheet
+                above a light scrim instead of a cramped popover over the page. */}
+            <div
+              className="fixed inset-0 z-30 bg-fg/30 sm:hidden"
+              onPointerDown={() => selectWord(null, false)}
+              aria-hidden="true"
+            />
+            <div
+              className="fixed inset-x-0 bottom-0 z-40 max-h-[82dvh] overflow-y-auto p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:contents"
+              onPointerDown={(event) => event.stopPropagation()}
+            >
+              <div
+                className="sm:absolute sm:z-20 sm:w-[min(18.5rem,calc(100%-0.5rem))]"
+                style={popoverStyle}
+              >
+                <WordPopover word={selected} />
+              </div>
+            </div>
+          </>
         )}
 
         {running && (

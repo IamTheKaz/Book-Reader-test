@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { BookOpen, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useActiveBook } from "@/store/book-store";
 import { usePageStore } from "@/store/page-store";
 
 export function UploadPanel() {
@@ -9,6 +10,7 @@ export function UploadPanel() {
   const loadFile = usePageStore((s) => s.loadFile);
   const loadSample = usePageStore((s) => s.loadSample);
   const ocr = usePageStore((s) => s.ocr);
+  const activeBook = useActiveBook();
   const [dragOver, setDragOver] = useState(false);
   const [busy, setBusy] = useState<"file" | "sample" | null>(null);
 
@@ -49,10 +51,12 @@ export function UploadPanel() {
             <ImagePlus className="size-5" />
           </span>
           <span className="mt-4 font-display text-2xl font-medium tracking-tight">
-            Upload a book page
+            {activeBook ? `Add a page to “${activeBook.name}”` : "Upload a book page"}
           </span>
           <span className="mt-2 max-w-sm text-sm text-muted">
-            A photo of one page or a two-page spread. Words are detected automatically and laid on the image.
+            {activeBook
+              ? "A photo of one page or a two-page spread. It lands at the end of the book — you can reorder pages afterwards."
+              : "A photo of one page or a two-page spread. Words are detected automatically and laid on the image."}
           </span>
           <span className="mt-5 inline-flex h-11 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-fg">
             Choose image

@@ -1,15 +1,14 @@
 import { create } from "zustand";
 import {
   assembledSentence,
-  buildApprovedPage,
   buildSpeechPlan,
-  type ApprovedPage,
   type PageImage,
   type PageLayout,
   type PageWord,
 } from "@/lib/page-model";
 import { detectWords, fileToDataUrl, samplePageDataUrl } from "@/lib/ocr";
 import { canSpeak, cancelSpeech, speakText } from "@/lib/tts";
+import { useBookStore } from "@/store/book-store";
 
 export type EditorMode = "spelling" | "pronunciation";
 export type OcrState = {
@@ -27,6 +26,10 @@ type PageStore = {
   words: PageWord[];
   layout: PageLayout;
   sentenceOverride: string | null;
+  /** Book this page belongs to; null in standalone (pre-book) sessions. */
+  bookId: string | null;
+  /** Id of the page inside the book; null until the first upload for it. */
+  pageId: string | null;
   selectedId: string | null;
   editorMode: EditorMode;
   showOrderEditor: boolean;
@@ -40,6 +43,10 @@ type PageStore = {
   loadFile: (file: File) => Promise<void>;
   loadSample: () => Promise<void>;
   reset: () => void;
+  /** Start a fresh, empty page inside a book (shows the upload panel). */
+  beginBookPage: (bookId: string) => void;
+  /** Load an existing book page back into the editor. */
+  openBookPage: (bookId: string, pageId: string) => void;
   setLayout: (layout: PageLayout) => void;
   selectWord: (id: string | null, play?: boolean) => void;
   setEditorMode: (mode: EditorMode) => void;
@@ -58,6 +65,16 @@ type PageStore = {
 };
 
 const idleOcr: OcrState = { status: "idle", progress: 0, message: "" };
+
+/** Give the upcoming upload a page id so it syncs into the active book. */
+function mintPageIdForBook(
+  get: () => PageStore,
+  set: (partial: Partial<PageStore>) => void,
+) {
+  if (get().bookId && !get().pageId) {
+    set({ pageId: crypto.randomUUID() });
+  }
+}
 
 function touchAfterEdit(set: (partial: Partial<PageStore>) => void) {
   set({ approved: false, approvedAt: null });
@@ -115,6 +132,8 @@ export const usePageStore = create<PageStore>((set, get) => ({
   words: [],
   layout: "single",
   sentenceOverride: null,
+  bookId: null,
+  pageId: null,
   selectedId: null,
   editorMode: "spelling",
   showOrderEditor: false,
@@ -127,11 +146,13 @@ export const usePageStore = create<PageStore>((set, get) => ({
   ttsAvailable: true,
 
   loadFile: async (file) => {
+    mintPageIdForBook(get, set);
     const src = await fileToDataUrl(file);
     await runOcr(src, file.name || "page.png", set);
   },
 
   loadSample: async () => {
+    mintPageIdForBook(get, set);
     const sample = await samplePageDataUrl();
     await runOcr(sample.src, sample.name, set);
   },
@@ -143,6 +164,8 @@ export const usePageStore = create<PageStore>((set, get) => ({
       words: [],
       layout: "single",
       sentenceOverride: null,
+      bookId: null,
+      pageId: null,
       selectedId: null,
       editorMode: "spelling",
       showOrderEditor: false,
@@ -152,6 +175,59 @@ export const usePageStore = create<PageStore>((set, get) => ({
       hasPreviewed: false,
       approved: false,
       approvedAt: null,
+    });
+  },
+
+  beginBookPage: (bookId) => {
+    cancelSpeech();
+    set({
+      image: null,
+      words: [],
+      layout: "single",
+      sentenceOverride: null,
+      bookId,
+      pageId: null,
+      selectedId: null,
+      editorMode: "spelling",
+      showOrderEditor: false,
+      orderDraft: "",
+      ocr: idleOcr,
+      playback: { kind: "idle", wordId: null },
+      hasPreviewed: false,
+      approved: false,
+      approvedAt: null,
+    });
+  },
+
+  openBookPage: (bookId, pageId) => {
+    const book = useBookStore.getState().books.find((b) => b.id === bookId);
+    const page = book?.pages.find((p) => p.id === pageId);
+    if (!page) return;
+    cancelSpeech();
+    set({
+      image: page.image,
+      words: page.words,
+      layout: page.layout,
+      sentenceOverride: page.sentenceOverride,
+      bookId,
+      pageId,
+      selectedId: null,
+      editorMode: "spelling",
+      showOrderEditor: false,
+      orderDraft: "",
+      ocr: {
+        status: "done",
+        progress: 1,
+        message:
+          page.words.length === 0
+            ? "No words found — try a clearer photo"
+            : `Found ${page.words.length} word${page.words.length === 1 ? "" : "s"}`,
+      },
+      playback: { kind: "idle", wordId: null },
+      hasPreviewed: page.hasPreviewed,
+      approved: page.approved,
+      approvedAt: page.approvedAt,
+      ttsAvailable: canSpeak(),
     });
   },
 
@@ -313,24 +389,37 @@ export const usePageStore = create<PageStore>((set, get) => ({
   },
 }));
 
-export function useApprovedPayload(): ApprovedPage | null {
-  const image = usePageStore((s) => s.image);
-  const words = usePageStore((s) => s.words);
-  const layout = usePageStore((s) => s.layout);
-  const sentenceOverride = usePageStore((s) => s.sentenceOverride);
-  const approved = usePageStore((s) => s.approved);
-  const approvedAt = usePageStore((s) => s.approvedAt);
-  if (!image) return null;
-  const page = buildApprovedPage({
-    image,
-    words,
-    layout,
-    sentenceOverride,
-    approvedAt: approvedAt ?? new Date(0).toISOString(),
+/**
+ * Keep the active book's copy of the page in sync with the editor. Any change
+ * to the persisted fields (image, words, layout, sentence, preview, approval)
+ * upserts a snapshot into the book store, which persists it to localStorage.
+ * Books stay usable in any partial state — no save step, no completion gate.
+ */
+usePageStore.subscribe((state, prev) => {
+  const { bookId, pageId } = state;
+  if (!bookId || !pageId || !state.image) return;
+  if (
+    state.image === prev.image &&
+    state.words === prev.words &&
+    state.layout === prev.layout &&
+    state.sentenceOverride === prev.sentenceOverride &&
+    state.hasPreviewed === prev.hasPreviewed &&
+    state.approved === prev.approved &&
+    state.approvedAt === prev.approvedAt
+  ) {
+    return;
+  }
+  const books = useBookStore.getState();
+  if (!books.books.some((b) => b.id === bookId)) return;
+  books.upsertPage(bookId, {
+    id: pageId,
+    createdAt: new Date().toISOString(),
+    image: state.image,
+    words: state.words,
+    layout: state.layout,
+    sentenceOverride: state.sentenceOverride,
+    hasPreviewed: state.hasPreviewed,
+    approved: state.approved,
+    approvedAt: state.approvedAt,
   });
-  return {
-    ...page,
-    approved,
-    approvedAt: approved ? (approvedAt ?? page.approvedAt) : null,
-  };
-}
+});

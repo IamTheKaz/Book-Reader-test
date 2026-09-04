@@ -91,6 +91,8 @@
 .word-box {
   position: absolute;
   border-radius: 4px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   background: color-mix(in oklab, var(--color-primary) 10%, transparent);
   box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--color-primary) 42%, transparent);
   transition:

@@ -1,4 +1,4 @@
-import { Check, ListOrdered, Play, Square, Volume2 } from "lucide-react";
+import { Check, ListOrdered, Play, Plus, Square, Volume2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,7 +7,8 @@ import {
   buildSpeechPlan,
 } from "@/lib/page-model";
 import { cn } from "@/lib/utils";
-import { useApprovedPayload, usePageStore } from "@/store/page-store";
+import { useActiveBook } from "@/store/book-store";
+import { usePageStore } from "@/store/page-store";
 
 export function ReviewSidebar() {
   const image = usePageStore((s) => s.image);
@@ -28,9 +29,10 @@ export function ReviewSidebar() {
   const hasPreviewed = usePageStore((s) => s.hasPreviewed);
   const approved = usePageStore((s) => s.approved);
   const approve = usePageStore((s) => s.approve);
+  const beginBookPage = usePageStore((s) => s.beginBookPage);
   const ocr = usePageStore((s) => s.ocr);
   const ttsAvailable = usePageStore((s) => s.ttsAvailable);
-  const payload = useApprovedPayload();
+  const activeBook = useActiveBook();
 
   if (!image) return null;
 
@@ -39,17 +41,6 @@ export function ReviewSidebar() {
   const plan = buildSpeechPlan(words, layout, image.width, sentenceOverride);
   const autoSentence = assembledSentence(words, layout, image.width);
   const ready = words.length > 0 && ocr.status === "done";
-  const jsonText = payload
-    ? JSON.stringify(
-        {
-          ...payload,
-          approved,
-          approvedAt: approved ? payload.approvedAt : null,
-        },
-        null,
-        2,
-      )
-    : "{}";
 
   return (
     <aside className="flex flex-col gap-4">
@@ -179,22 +170,16 @@ export function ReviewSidebar() {
         {!hasPreviewed && (
           <p className="mt-2 text-xs text-muted">Preview the narration at least once before approving.</p>
         )}
-      </section>
-
-      <section className="rounded-xl bg-surface p-4 shadow-border">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="font-display text-lg font-medium tracking-tight">Page data</h3>
+        {approved && activeBook && (
           <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => void navigator.clipboard?.writeText(jsonText)}
+            variant="secondary"
+            className="mt-2 w-full"
+            onClick={() => beginBookPage(activeBook.id)}
           >
-            Copy JSON
+            <Plus />
+            Add next page
           </Button>
-        </div>
-        <pre className="mt-3 max-h-80 overflow-auto rounded-md bg-bg-sunken p-3 font-mono text-xs leading-relaxed text-fg">
-          {jsonText}
-        </pre>
+        )}
       </section>
 
       <p className="flex items-start gap-2 text-xs text-subtle">
