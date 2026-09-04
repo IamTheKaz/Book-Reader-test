@@ -86,7 +86,7 @@ export const recordScoreFn = createServerFn({ method: "POST" })
   });
 
 /** All recorded scores, newest first, joined with book names. Teacher view. */
-export const listScoresFn = createServerFn({ method: "GET" }).handler(
+export const listScoresFn = createServerFn({ method: "POST" }).handler(
   async (): Promise<StudentScore[]> => {
     const sql = await getSql();
     const rows = await sql<ScoreRow>`

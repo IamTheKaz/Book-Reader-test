@@ -7,7 +7,7 @@ const TEACHER_KEY = "teacher";
 type ConfigRow = { password_hash: string | null; salt: string | null };
 
 /** True once a shared teacher password has been set. */
-export const getTeacherStatus = createServerFn({ method: "GET" }).handler(
+export const getTeacherStatus = createServerFn({ method: "POST" }).handler(
   async (): Promise<{ hasPassword: boolean }> => {
     const sql = await getSql();
     const rows = await sql<ConfigRow>`select password_hash, salt from app_config where id = ${TEACHER_KEY}`;

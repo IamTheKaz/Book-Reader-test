@@ -6,7 +6,7 @@ type BookRow = { id: string; name: string; created_at: string };
 type PageRow = { id: string; position: number; created_at: string; payload: BookPage };
 
 /** Every book with its pages in reading order. Unowned (no auth), demo-level. */
-export const listBooks = createServerFn({ method: "GET" }).handler(async (): Promise<Book[]> => {
+export const listBooks = createServerFn({ method: "POST" }).handler(async (): Promise<Book[]> => {
   const sql = await getSql();
   const books = await sql<BookRow>`select id, name, created_at from books order by created_at asc`;
   if (books.length === 0) return [];
