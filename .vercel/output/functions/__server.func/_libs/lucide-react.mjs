@@ -128,6 +128,16 @@ var ChevronDown = createLucideIcon("chevron-down", [["path", {
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
+var ChevronLeft = createLucideIcon("chevron-left", [["path", {
+	d: "m15 18-6-6 6-6",
+	key: "1wnfg3"
+}]]);
+/**
+* @license lucide-react v0.510.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
 var ChevronRight = createLucideIcon("chevron-right", [["path", {
 	d: "m9 18 6-6-6-6",
 	key: "mthhwq"
@@ -178,6 +188,22 @@ var ImagePlus = createLucideIcon("image-plus", [
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
+var KeyRound = createLucideIcon("key-round", [["path", {
+	d: "M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z",
+	key: "1s6t7t"
+}], ["circle", {
+	cx: "16.5",
+	cy: "7.5",
+	r: ".5",
+	fill: "currentColor",
+	key: "w0ekpg"
+}]]);
+/**
+* @license lucide-react v0.510.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
 var ListOrdered = createLucideIcon("list-ordered", [
 	["path", {
 		d: "M10 12h11",
@@ -220,6 +246,24 @@ var LoaderCircle = createLucideIcon("loader-circle", [["path", {
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
+var Lock = createLucideIcon("lock", [["rect", {
+	width: "18",
+	height: "11",
+	x: "3",
+	y: "11",
+	rx: "2",
+	ry: "2",
+	key: "1w4ew1"
+}], ["path", {
+	d: "M7 11V7a5 5 0 0 1 10 0v4",
+	key: "fwvmzm"
+}]]);
+/**
+* @license lucide-react v0.510.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
 var Play = createLucideIcon("play", [["polygon", {
 	points: "6 3 20 12 6 21 6 3",
 	key: "1oa8hb"
@@ -251,6 +295,34 @@ var Square = createLucideIcon("square", [["rect", {
 	rx: "2",
 	key: "afitv7"
 }]]);
+/**
+* @license lucide-react v0.510.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var Timer = createLucideIcon("timer", [
+	["line", {
+		x1: "10",
+		x2: "14",
+		y1: "2",
+		y2: "2",
+		key: "14vaq8"
+	}],
+	["line", {
+		x1: "12",
+		x2: "15",
+		y1: "14",
+		y2: "11",
+		key: "17fdiu"
+	}],
+	["circle", {
+		cx: "12",
+		cy: "14",
+		r: "8",
+		key: "1e1u0o"
+	}]
+]);
 /**
 * @license lucide-react v0.510.0 - ISC
 *
@@ -311,6 +383,32 @@ var TriangleAlert = createLucideIcon("triangle-alert", [
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
+var Users = createLucideIcon("users", [
+	["path", {
+		d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2",
+		key: "1yyitq"
+	}],
+	["path", {
+		d: "M16 3.128a4 4 0 0 1 0 7.744",
+		key: "16gr8j"
+	}],
+	["path", {
+		d: "M22 21v-2a4 4 0 0 0-3-3.87",
+		key: "kshegd"
+	}],
+	["circle", {
+		cx: "9",
+		cy: "7",
+		r: "4",
+		key: "nufk8"
+	}]
+]);
+/**
+* @license lucide-react v0.510.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
 var Volume2 = createLucideIcon("volume-2", [
 	["path", {
 		d: "M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z",
@@ -339,4 +437,4 @@ var X = createLucideIcon("x", [["path", {
 	key: "d8bk6v"
 }]]);
 //#endregion
-export { Square as a, LoaderCircle as c, ChevronUp as d, ChevronRight as f, ArrowLeft as g, BookOpen as h, Trash2 as i, ListOrdered as l, Check as m, Volume2 as n, Plus as o, ChevronDown as p, TriangleAlert as r, Play as s, X as t, ImagePlus as u };
+export { ChevronLeft as _, Trash2 as a, BookOpen as b, Plus as c, LoaderCircle as d, ListOrdered as f, ChevronRight as g, ChevronUp as h, TriangleAlert as i, Play as l, ImagePlus as m, Volume2 as n, Timer as o, KeyRound as p, Users as r, Square as s, X as t, Lock as u, ChevronDown as v, ArrowLeft as x, Check as y };

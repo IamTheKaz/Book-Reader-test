@@ -1,7 +1,9 @@
-import { useEffect } from "react";
-import { BookOpen } from "lucide-react";
+import { useEffect, useState } from "react";
+import { BookOpen, Users } from "lucide-react";
 import { BookView } from "@/components/book-view";
 import { LibraryView } from "@/components/library-view";
+import { ScoresView } from "@/components/scores-view";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useActiveBook, useBookStore } from "@/store/book-store";
 import { usePageStore } from "@/store/page-store";
@@ -23,6 +25,7 @@ export function TeacherApp() {
   const setShowOrderEditor = usePageStore((s) => s.setShowOrderEditor);
   const activeBook = useActiveBook();
   const hydrate = useBookStore((s) => s.hydrate);
+  const [view, setView] = useState<"books" | "scores">("books");
 
   useEffect(() => {
     hydrate();
@@ -51,7 +54,9 @@ export function TeacherApp() {
           ? 3
           : 2;
 
-  const modeLabel = !activeBook
+  const modeLabel = view === "scores"
+    ? "Student reading scores"
+    : !activeBook
     ? "Your books"
     : !image
       ? `Add a page to “${activeBook.name}”`
@@ -83,6 +88,15 @@ export function TeacherApp() {
               <p className="font-display text-xl font-medium tracking-tight">Page Aloud</p>
               <p className="text-sm text-muted">Teacher book studio</p>
             </div>
+            <Button
+              variant={view === "scores" ? "secondary" : "ghost"}
+              size="sm"
+              className="ml-2"
+              onClick={() => setView(view === "scores" ? "books" : "scores")}
+            >
+              <Users />
+              Scores
+            </Button>
           </div>
           {editorOpen && (
             <ol className="flex flex-wrap items-center gap-1 text-xs font-medium sm:text-sm">
@@ -113,7 +127,13 @@ export function TeacherApp() {
       </div>
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">
-        {activeBook ? <BookView book={activeBook} /> : <LibraryView />}
+        {view === "scores" ? (
+          <ScoresView onBack={() => setView("books")} />
+        ) : activeBook ? (
+          <BookView book={activeBook} />
+        ) : (
+          <LibraryView />
+        )}
       </main>
     </div>
   );

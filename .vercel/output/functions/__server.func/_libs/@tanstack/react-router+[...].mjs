@@ -57,6 +57,11 @@ function isRedirect(obj) {
 function isResolvedRedirect(obj) {
 	return isRedirect(obj) && !!obj.options.href;
 }
+/** Parse a serialized redirect object back into a redirect Response. */
+/** Parse a serialized redirect object back into a redirect Response. */
+function parseRedirect(obj) {
+	if (obj !== null && typeof obj === "object" && obj.isSerializedRedirect) return redirect(obj);
+}
 //#endregion
 //#region node_modules/@tanstack/router-core/dist/esm/ssr/ssr-match-id.js
 function dehydrateSsrMatchId(id) {
@@ -14736,4 +14741,4 @@ var renderRouterToStream = async ({ request, router, responseHeaders, children }
 	throw new Error("No renderToReadableStream or renderToPipeableStream found in react-dom/server. Ensure you are using a version of react-dom that supports streaming.");
 };
 //#endregion
-export { createLRUCache as A, getScriptPreloadAttrs as C, _getRenderedMatches as D, resolveManifestCssLink as E, rootRouteId as F, isNotFound as I, dehydrateSsrMatchId as M, isRedirect as N, executeRewriteInput as O, isResolvedRedirect as P, createInlineCssStyleAsset as S, resolveManifestAssetLink as T, useRouter as _, isSsrResponse as a, TSR_SCRIPT_BARRIER_ID as b, stripSsrResponseBody as c, RouterProvider as d, createRouter as f, createRootRoute as g, createFileRoute as h, disposeSsrResponseDetached as i, decodePath as j, invariant as k, Scripts as l, lazyRouteComponent as m, bindSsrResponseToRequest as n, normalizeSsrResponse as o, Outlet as p, defineHandlerCallback as r, replaceSsrResponse as s, renderRouterToStream as t, HeadContent as u, require_jsx_runtime as v, getStylesheetHref as w, createInlineCssPlaceholderAsset as x, GLOBAL_TSR as y };
+export { invariant as A, createInlineCssStyleAsset as C, resolveManifestCssLink as D, resolveManifestAssetLink as E, isResolvedRedirect as F, parseRedirect as I, rootRouteId as L, decodePath as M, dehydrateSsrMatchId as N, _getRenderedMatches as O, isRedirect as P, isNotFound as R, createInlineCssPlaceholderAsset as S, getStylesheetHref as T, Link as _, isSsrResponse as a, GLOBAL_TSR as b, stripSsrResponseBody as c, RouterProvider as d, createRouter as f, createRootRoute as g, createFileRoute as h, disposeSsrResponseDetached as i, createLRUCache as j, executeRewriteInput as k, Scripts as l, lazyRouteComponent as m, bindSsrResponseToRequest as n, normalizeSsrResponse as o, Outlet as p, defineHandlerCallback as r, replaceSsrResponse as s, renderRouterToStream as t, HeadContent as u, useRouter as v, getScriptPreloadAttrs as w, TSR_SCRIPT_BARRIER_ID as x, require_jsx_runtime as y };

@@ -2,22 +2,31 @@ import { create } from "zustand";
 import {
   createBook as buildBook,
   moveBookPage,
-  parseBooks,
   removeBookPage,
-  serializeBooks,
   upsertBookPage,
   type Book,
   type BookPage,
 } from "@/lib/book-model";
+import {
+  apiCreateBook,
+  apiDeleteBook,
+  apiRemovePage,
+  apiSetPageOrder,
+  apiUpsertPage,
+  fetchBooks,
+} from "@/lib/api";
 
-const STORAGE_KEY = "page-aloud:books:v1";
-const SAVE_DEBOUNCE_MS = 400;
+/**
+ * Books are persisted in the database (Neon, or the PGLite preview fallback).
+ * This store holds the client view and pushes every change through the public
+ * server functions. Rows are unowned (auth-off), so this is demo-level data.
+ */
 
 type BookStore = {
   books: Book[];
-  /** Set once localStorage has been read on the client (never on the server). */
+  /** Set once the initial load from the server resolves. */
   hydrated: boolean;
-  /** Non-null when the last save failed (e.g. storage quota exceeded). */
+  /** Non-null when loading or the last save failed. */
   persistError: string | null;
   activeBookId: string | null;
   hydrate: () => void;
@@ -30,34 +39,16 @@ type BookStore = {
   removePage: (bookId: string, pageId: string) => void;
 };
 
-let saveTimer: ReturnType<typeof setTimeout> | null = null;
+let saveChain: Promise<unknown> = Promise.resolve();
 
-function writeBooks(books: Book[]): string | null {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, serializeBooks(books));
-    return null;
-  } catch {
-    return "This browser's local storage is full — the latest changes may not survive a reload.";
-  }
-}
-
-/** Debounce writes: word-by-word edits sync on every keystroke. */
-function schedulePersist(set: (partial: Partial<BookStore>) => void, books: Book[]) {
-  if (typeof window === "undefined") return;
-  if (saveTimer) clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    saveTimer = null;
-    set({ persistError: writeBooks(books) });
-  }, SAVE_DEBOUNCE_MS);
-}
-
-function persistNow(books: Book[]): string | null {
-  if (saveTimer) {
-    clearTimeout(saveTimer);
-    saveTimer = null;
-  }
-  if (typeof window === "undefined") return null;
-  return writeBooks(books);
+/** Serialize writes so rapid edits (typing) don't race the server. */
+function enqueue(task: () => Promise<unknown>, onError: (message: string) => void) {
+  saveChain = saveChain
+    .then(task)
+    .then(() => undefined)
+    .catch(() =>
+      onError("Couldn't save — your latest change may not persist. Check the connection."),
+    );
 }
 
 export const useBookStore = create<BookStore>((set, get) => ({
@@ -68,23 +59,26 @@ export const useBookStore = create<BookStore>((set, get) => ({
 
   hydrate: () => {
     if (get().hydrated || typeof window === "undefined") return;
-    set({ books: parseBooks(window.localStorage.getItem(STORAGE_KEY)), hydrated: true });
+    void fetchBooks()
+      .then((books) => set({ books, hydrated: true, persistError: null }))
+      .catch(() =>
+        set({ persistError: "Couldn't load your books. Is the app running?", hydrated: true }),
+      );
   },
 
   createBook: (name) => {
     const book = buildBook(name);
-    const books = [...get().books, book];
-    set({ books, activeBookId: book.id, persistError: persistNow(books) });
+    set((s) => ({ books: [...s.books, book], activeBookId: book.id, persistError: null }));
+    enqueue(() => apiCreateBook(book.id, book.name), (m) => set({ persistError: m }));
     return book.id;
   },
 
   deleteBook: (id) => {
-    const books = get().books.filter((b) => b.id !== id);
-    set({
-      books,
-      activeBookId: get().activeBookId === id ? null : get().activeBookId,
-      persistError: persistNow(books),
-    });
+    set((s) => ({
+      books: s.books.filter((b) => b.id !== id),
+      activeBookId: s.activeBookId === id ? null : s.activeBookId,
+    }));
+    enqueue(() => apiDeleteBook(id), (m) => set({ persistError: m }));
   },
 
   openBook: (id) => {
@@ -94,37 +88,35 @@ export const useBookStore = create<BookStore>((set, get) => ({
   closeBook: () => set({ activeBookId: null }),
 
   upsertPage: (bookId, page) => {
-    const books = get().books.map((b) => (b.id === bookId ? upsertBookPage(b, page) : b));
-    set({ books });
-    schedulePersist(set, books);
+    set((s) => ({
+      books: s.books.map((b) => (b.id === bookId ? upsertBookPage(b, page) : b)),
+    }));
+    enqueue(() => apiUpsertPage(bookId, page), (m) => set({ persistError: m }));
   },
 
   movePage: (bookId, pageId, direction) => {
-    const books = get().books.map((b) => (b.id === bookId ? moveBookPage(b, pageId, direction) : b));
-    set({ books, persistError: persistNow(books) });
+    const book = get().books.find((b) => b.id === bookId);
+    if (!book) return;
+    const next = moveBookPage(book, pageId, direction);
+    set((s) => ({ books: s.books.map((b) => (b.id === bookId ? next : b)) }));
+    enqueue(
+      () =>
+        apiSetPageOrder(
+          bookId,
+          next.pages.map((p) => p.id),
+        ),
+      (m) => set({ persistError: m }),
+    );
   },
 
   removePage: (bookId, pageId) => {
-    const books = get().books.map((b) => (b.id === bookId ? removeBookPage(b, pageId) : b));
-    set({ books, persistError: persistNow(books) });
+    set((s) => ({
+      books: s.books.map((b) => (b.id === bookId ? removeBookPage(b, pageId) : b)),
+    }));
+    enqueue(() => apiRemovePage(pageId), (m) => set({ persistError: m }));
   },
 }));
 
 export function useActiveBook(): Book | null {
   return useBookStore((s) => s.books.find((b) => b.id === s.activeBookId) ?? null);
-}
-
-/** Flush any pending debounced save; used when the tab is hidden/closed. */
-export function flushBookPersistence() {
-  const { books } = useBookStore.getState();
-  if (books.length === 0 && saveTimer === null) return;
-  const error = persistNow(books);
-  if (error) useBookStore.setState({ persistError: error });
-}
-
-if (typeof window !== "undefined") {
-  window.addEventListener("beforeunload", flushBookPersistence);
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") flushBookPersistence();
-  });
 }

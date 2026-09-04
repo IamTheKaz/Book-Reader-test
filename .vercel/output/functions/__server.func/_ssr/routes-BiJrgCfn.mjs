@@ -1,202 +1,121 @@
 import { o as __toESM } from "../_runtime.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
-import { v as require_jsx_runtime } from "../_libs/@tanstack/react-router+[...].mjs";
-import { a as Square, c as LoaderCircle, d as ChevronUp, f as ChevronRight, g as ArrowLeft, h as BookOpen, i as Trash2, l as ListOrdered, m as Check, n as Volume2, o as Plus, p as ChevronDown, r as TriangleAlert, s as Play, t as X, u as ImagePlus } from "../_libs/lucide-react.mjs";
-import { t as cva } from "../_libs/class-variance-authority+clsx.mjs";
-import { n as assetUrl, r as cn } from "./router-BHc8LRoY.mjs";
-import { t as Slot } from "../_libs/radix-ui__react-slot.mjs";
+import { _ as Link, y as require_jsx_runtime } from "../_libs/@tanstack/react-router+[...].mjs";
+import { a as Trash2, b as BookOpen, c as Plus, d as LoaderCircle, f as ListOrdered, g as ChevronRight, h as ChevronUp, i as TriangleAlert, l as Play, m as ImagePlus, n as Volume2, o as Timer, p as KeyRound, r as Users, s as Square, t as X, u as Lock, v as ChevronDown, x as ArrowLeft, y as Check } from "../_libs/lucide-react.mjs";
+import { n as assetUrl, r as cn } from "./router-CjzUIeb-.mjs";
+import { _ as fetchBooks, a as apiDeleteBook, b as speakText, c as apiSetPageOrder, d as apiVerifyTeacherPassword, f as assembledSentence, g as cleanOcrText, h as cancelSpeech, i as apiCreateBook, l as apiSetTeacherPassword, m as canSpeak, n as Button, p as buildSpeechPlan, r as Input, s as apiRemovePage, t as Badge, u as apiUpsertPage, v as fetchScores, y as fetchTeacherStatus } from "./tts-Csa31ETN.mjs";
 import { t as create } from "../_libs/zustand.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-DZZyheY5.js
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-BiJrgCfn.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
-var badgeVariants = cva("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium tracking-tight", {
-	variants: { variant: {
-		default: "bg-primary-soft text-primary",
-		muted: "bg-bg-sunken text-muted",
-		outline: "shadow-border text-muted",
-		danger: "bg-danger-soft text-danger"
-	} },
-	defaultVariants: { variant: "default" }
-});
-function Badge({ className, variant, ...props }) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-		className: cn(badgeVariants({ variant }), className),
-		...props
-	});
-}
-var buttonVariants = cva("inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[opacity,transform,background-color,box-shadow,color] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 btn-press", {
-	variants: {
-		variant: {
-			default: "bg-primary text-primary-fg shadow-border hover:opacity-90",
-			secondary: "bg-primary-soft text-primary hover:opacity-90",
-			outline: "bg-surface text-fg shadow-border hover:bg-surface-2",
-			ghost: "text-fg hover:bg-surface-2",
-			danger: "bg-danger-soft text-danger hover:opacity-90"
-		},
-		size: {
-			default: "h-11 px-4",
-			sm: "h-9 px-3 text-sm",
-			lg: "h-12 px-5",
-			icon: "size-11"
-		}
-	},
-	defaultVariants: {
-		variant: "default",
-		size: "default"
-	}
-});
-var Button = import_react.forwardRef(({ className, variant, size, asChild = false, ...props }, ref) => {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(asChild ? Slot : "button", {
-		className: cn(buttonVariants({
-			variant,
-			size,
-			className
-		})),
-		ref,
-		...props
-	});
-});
-Button.displayName = "Button";
-var Input = import_react.forwardRef(({ className, type, ...props }, ref) => {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-		type,
-		className: cn("flex h-11 w-full rounded-sm border border-border bg-surface px-3 text-base text-fg shadow-border", "placeholder:text-subtle", "transition-[box-shadow,border-color] duration-150 ease-out", "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35", "disabled:cursor-not-allowed disabled:opacity-50", className),
-		ref,
-		...props
-	});
-});
-Input.displayName = "Input";
-function cleanOcrText(raw) {
-	const trimmed = raw.replace(/\s+/g, " ").trim();
-	if (!trimmed) return "";
-	return trimmed.replace(/^[^\p{L}\p{N}]+/u, "").replace(/[^\p{L}\p{N}'’-]+$/u, "").trim() || trimmed;
-}
-function tokenizeSentence(sentence) {
-	return sentence.trim().split(/\s+/).map((t) => t.trim()).filter(Boolean);
-}
-function normalizeToken(value) {
-	return (value.toLowerCase().match(/[\p{L}\p{N}]+(?:['’][\p{L}\p{N}]+)*/gu)?.join("") ?? value.toLowerCase()).replace(/[’]/g, "'");
-}
-/** Cluster by Y, then left-to-right. Spread mode reads the left half fully, then the right. */
-function sortReadingOrder(words, layout, pageWidth) {
-	if (words.length === 0) return [];
-	if (layout === "spread") {
-		const mid = pageWidth / 2;
-		const left = words.filter((w) => (w.bbox.x0 + w.bbox.x1) / 2 < mid);
-		const right = words.filter((w) => (w.bbox.x0 + w.bbox.x1) / 2 >= mid);
-		return [...sortLines(left), ...sortLines(right)];
-	}
-	return sortLines(words);
-}
-function sortLines(words) {
-	if (words.length === 0) return [];
-	const heights = words.map((w) => Math.max(1, w.bbox.y1 - w.bbox.y0)).sort((a, b) => a - b);
-	const threshold = (heights[Math.floor(heights.length / 2)] ?? 24) * .65;
-	const remaining = [...words].sort((a, b) => a.bbox.y0 - b.bbox.y0 || a.bbox.x0 - b.bbox.x0);
-	const lines = [];
-	for (const word of remaining) {
-		const cy = (word.bbox.y0 + word.bbox.y1) / 2;
-		let target;
-		for (const line of lines) {
-			const ly = line.reduce((sum, item) => sum + (item.bbox.y0 + item.bbox.y1) / 2, 0) / line.length;
-			if (Math.abs(cy - ly) < threshold) {
-				target = line;
-				break;
-			}
-		}
-		if (target) target.push(word);
-		else lines.push([word]);
-	}
-	lines.sort((a, b) => {
-		return a.reduce((sum, item) => sum + (item.bbox.y0 + item.bbox.y1) / 2, 0) / a.length - b.reduce((sum, item) => sum + (item.bbox.y0 + item.bbox.y1) / 2, 0) / b.length;
-	});
-	return lines.flatMap((line) => line.sort((a, b) => a.bbox.x0 - b.bbox.x0));
-}
-function getSpokenWordText(word) {
-	const baseText = word.phonetic?.trim() || word.text;
-	const raw = word.rawText?.trim();
-	if (!raw) return baseText;
-	const leadingPunct = raw.match(/^[^\p{L}\p{N}]+/u)?.[0] ?? "";
-	const trailingPunct = raw.match(/[^\p{L}\p{N}'’-]+$/u)?.[0] ?? "";
-	let result = baseText;
-	if (leadingPunct && !result.startsWith(leadingPunct)) result = `${leadingPunct}${result}`;
-	if (trailingPunct && !result.endsWith(trailingPunct)) result = `${result}${trailingPunct}`;
-	return result;
-}
-function assembledSentence(words, layout, pageWidth) {
-	return sortReadingOrder(words, layout, pageWidth).map((w) => getSpokenWordText(w)).join(" ").trim();
-}
 /**
-* Build a spoken plan. Override text (if any) is the TTS source; detected boxes
-* are matched by spelling so karaoke still lands on the page.
+* Shared teacher-password gate (single password, not per-teacher accounts).
+* First run: whoever opens the teacher side sets the password. After that it's
+* required to create/edit books. Auth-off per project rules — this is a light
+* shared gate, not a login system.
 */
-function buildSpeechPlan(words, layout, pageWidth, sentenceOverride) {
-	if (sentenceOverride && sentenceOverride.trim()) {
-		const tokensIn = tokenizeSentence(sentenceOverride);
-		const used = /* @__PURE__ */ new Set();
-		const tokens = [];
-		let cursor = 0;
-		for (const raw of tokensIn) {
-			const key = normalizeToken(raw);
-			const match = words.find((w) => !used.has(w.id) && normalizeToken(w.text) === key);
-			if (match) used.add(match.id);
-			let speak;
-			if (match?.phonetic?.trim()) {
-				const leadingPunct = raw.match(/^[^\p{L}\p{N}]+/u)?.[0] ?? "";
-				const trailingPunct = raw.match(/[^\p{L}\p{N}'’-]+$/u)?.[0] ?? "";
-				let formatted = match.phonetic.trim();
-				if (leadingPunct && !formatted.startsWith(leadingPunct)) formatted = `${leadingPunct}${formatted}`;
-				if (trailingPunct && !formatted.endsWith(trailingPunct)) formatted = `${formatted}${trailingPunct}`;
-				speak = formatted;
-			} else speak = raw;
-			const start = cursor;
-			const end = start + speak.length;
-			tokens.push({
-				display: match?.text ?? cleanOcrText(raw),
-				speak,
-				wordId: match?.id ?? null,
-				start,
-				end
-			});
-			cursor = end + 1;
+function TeacherGate({ children }) {
+	const [state, setState] = (0, import_react.useState)("loading");
+	const [password, setPassword] = (0, import_react.useState)("");
+	const [confirm, setConfirm] = (0, import_react.useState)("");
+	const [error, setError] = (0, import_react.useState)(null);
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	(0, import_react.useEffect)(() => {
+		fetchTeacherStatus().then(({ hasPassword }) => setState(hasPassword ? "locked" : "setup")).catch(() => setState("setup"));
+	}, []);
+	async function submit() {
+		setError(null);
+		setBusy(true);
+		try {
+			if (state === "setup") {
+				if (password.trim().length < 4) {
+					setError("Choose a password of at least 4 characters.");
+					return;
+				}
+				if (password !== confirm) {
+					setError("Passwords don't match.");
+					return;
+				}
+				const res = await apiSetTeacherPassword(password);
+				if (!res.ok) {
+					setError(res.alreadySet ? "A password is already set. Enter it to continue." : "Couldn't set the password.");
+					if (res.alreadySet) setState("locked");
+					return;
+				}
+				setState("unlocked");
+			} else {
+				if (!(await apiVerifyTeacherPassword(password)).ok) {
+					setError("That password isn't right. Try again.");
+					return;
+				}
+				setState("unlocked");
+			}
+		} catch {
+			setError("Something went wrong. Please try again.");
+		} finally {
+			setBusy(false);
 		}
-		return {
-			spoken: tokens.map((t) => t.speak).join(" "),
-			tokens,
-			displaySentence: tokensIn.join(" ")
-		};
 	}
-	const ordered = sortReadingOrder(words, layout, pageWidth);
-	const tokens = [];
-	let cursor = 0;
-	for (const word of ordered) {
-		const speak = getSpokenWordText(word);
-		const start = cursor;
-		const end = start + speak.length;
-		tokens.push({
-			display: word.text,
-			speak,
-			wordId: word.id,
-			start,
-			end
-		});
-		cursor = end + 1;
-	}
-	return {
-		spoken: tokens.map((t) => t.speak).join(" "),
-		tokens,
-		displaySentence: tokens.map((t) => t.speak).join(" ")
-	};
-}
-function tokenAtChar(tokens, charIndex) {
-	if (tokens.length === 0) return void 0;
-	const hit = tokens.find((t) => charIndex >= t.start && charIndex < t.end);
-	if (hit) return hit;
-	for (let i = tokens.length - 1; i >= 0; i -= 1) {
-		const token = tokens[i];
-		if (token && charIndex >= token.start) return token;
-	}
-	return tokens[0];
+	if (state === "unlocked") return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children });
+	const setup = state === "setup";
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "mx-auto flex min-h-[60vh] max-w-md flex-col justify-center",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "rounded-2xl bg-surface p-6 shadow-border sm:p-8",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "flex size-12 items-center justify-center rounded-lg bg-primary-soft text-primary",
+					children: setup ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BookOpen, { className: "size-6" }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Lock, { className: "size-6" })
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-4 font-display text-2xl font-medium tracking-tight",
+					children: setup ? "Set the teacher password" : "Teacher sign-in"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 text-sm text-muted",
+					children: setup ? "One shared password protects creating and editing books. Pick something the staff will remember." : "Enter the shared teacher password to open the book studio."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+					className: "mt-5 flex flex-col gap-3",
+					onSubmit: (event) => {
+						event.preventDefault();
+						if (!busy) submit();
+					},
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Input, {
+							type: "password",
+							autoFocus: true,
+							value: password,
+							onChange: (e) => setPassword(e.target.value),
+							placeholder: setup ? "Choose a password" : "Teacher password",
+							"aria-label": "Teacher password",
+							autoComplete: setup ? "new-password" : "current-password"
+						}),
+						setup && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Input, {
+							type: "password",
+							value: confirm,
+							onChange: (e) => setConfirm(e.target.value),
+							placeholder: "Confirm password",
+							"aria-label": "Confirm password",
+							autoComplete: "new-password"
+						}),
+						error && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "text-sm text-danger",
+							children: error
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
+							type: "submit",
+							disabled: busy || (setup ? !password || !confirm : !password),
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(KeyRound, {}), busy ? "One moment…" : setup ? "Set password" : "Unlock"]
+						})
+					]
+				})
+			]
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "mt-4 text-center text-xs text-subtle",
+			children: "Students don't need this — they open a shared reading link and just type their name."
+		})]
+	});
 }
 var MAX_OCR_EDGE = 1800;
 function loadImage(src) {
@@ -368,125 +287,6 @@ async function samplePageDataUrl() {
 		name: "sample-page.png"
 	};
 }
-function waitForVoices() {
-	if (typeof window === "undefined" || !window.speechSynthesis) return Promise.resolve([]);
-	const existing = window.speechSynthesis.getVoices();
-	if (existing.length > 0) return Promise.resolve(existing);
-	return new Promise((resolve) => {
-		const finish = () => resolve(window.speechSynthesis.getVoices());
-		window.speechSynthesis.addEventListener("voiceschanged", finish, { once: true });
-		window.setTimeout(finish, 600);
-	});
-}
-async function pickVoice() {
-	const voices = await waitForVoices();
-	return voices.filter((v) => /^en([-_]|$)/i.test(v.lang)).map((voice) => {
-		let score = 0;
-		if (/en-US/i.test(voice.lang)) score += 2;
-		if (/Google|Natural|Premium|Neural|Samantha|Aria|Jenny/i.test(voice.name)) score += 3;
-		if (voice.localService) score += 1;
-		return {
-			voice,
-			score
-		};
-	}).sort((a, b) => b.score - a.score)[0]?.voice ?? voices[0] ?? null;
-}
-function estimateMs(text, rate) {
-	const ms = Math.max(text.trim().length, 1) / 13 * (1e3 / rate);
-	return Math.max(160, Math.min(2200, ms));
-}
-var active = null;
-function cancelSpeech() {
-	active?.cancel();
-	active = null;
-	if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
-}
-function canSpeak() {
-	return typeof window !== "undefined" && "speechSynthesis" in window;
-}
-function speakText(text, options) {
-	cancelSpeech();
-	const spoken = text.trim();
-	const rate = options?.rate ?? .5;
-	let cancelled = false;
-	const timeouts = [];
-	let utterance = null;
-	let settle;
-	const done = new Promise((resolve) => {
-		settle = resolve;
-	});
-	const finish = () => {
-		for (const id of timeouts) window.clearTimeout(id);
-		timeouts.length = 0;
-		if (active && utterance && window.speechSynthesis) window.speechSynthesis.cancel();
-		utterance = null;
-		if (active?.cancel === cancel) active = null;
-		settle?.();
-		settle = void 0;
-	};
-	const cancel = () => {
-		cancelled = true;
-		finish();
-	};
-	active = { cancel };
-	if (!spoken || !canSpeak()) {
-		queueMicrotask(() => {
-			if (!cancelled) finish();
-		});
-		return {
-			cancel,
-			done
-		};
-	}
-	(async () => {
-		if (cancelled) return;
-		const voice = await pickVoice();
-		if (cancelled) return;
-		await new Promise((r) => window.setTimeout(r, 40));
-		if (cancelled) return;
-		const u = new SpeechSynthesisUtterance(spoken);
-		u.rate = rate;
-		u.pitch = 1;
-		u.lang = voice?.lang || "en-US";
-		if (voice) u.voice = voice;
-		utterance = u;
-		let usedEngineBoundaries = false;
-		u.onboundary = (event) => {
-			if (cancelled) return;
-			if (event.name && event.name !== "word") return;
-			usedEngineBoundaries = true;
-			const index = event.charIndex ?? 0;
-			options?.onBoundary?.(index);
-			if (options?.tokens) {
-				const token = tokenAtChar(options.tokens, index);
-				if (token) options.onToken?.(token);
-			}
-		};
-		u.onend = () => {
-			if (!cancelled) finish();
-		};
-		u.onerror = () => {
-			if (!cancelled) finish();
-		};
-		if (options?.tokens && options.tokens.length > 0) {
-			let elapsed = 0;
-			for (const token of options.tokens) {
-				const startAt = elapsed;
-				const id = window.setTimeout(() => {
-					if (cancelled || usedEngineBoundaries) return;
-					options.onToken?.(token);
-				}, startAt);
-				timeouts.push(id);
-				elapsed += estimateMs(token.speak, rate);
-			}
-		}
-		window.speechSynthesis.speak(u);
-	})();
-	return {
-		cancel,
-		done
-	};
-}
 function createBook(name) {
 	return {
 		id: crypto.randomUUID(),
@@ -542,83 +342,10 @@ function removeBookPage(book, pageId) {
 function pagePosition(book, pageId) {
 	return book.pages.findIndex((p) => p.id === pageId);
 }
-function isRecord(value) {
-	return typeof value === "object" && value !== null;
-}
-function parsePage(value) {
-	if (!isRecord(value)) return null;
-	if (typeof value.id !== "string" || !isRecord(value.image)) return null;
-	if (typeof value.image.src !== "string" || typeof value.image.name !== "string") return null;
-	if (!Array.isArray(value.words)) return null;
-	return {
-		id: value.id,
-		createdAt: typeof value.createdAt === "string" ? value.createdAt : (/* @__PURE__ */ new Date(0)).toISOString(),
-		image: {
-			name: value.image.name,
-			src: value.image.src,
-			width: typeof value.image.width === "number" ? value.image.width : 0,
-			height: typeof value.image.height === "number" ? value.image.height : 0
-		},
-		words: value.words,
-		layout: value.layout === "spread" ? "spread" : "single",
-		sentenceOverride: typeof value.sentenceOverride === "string" ? value.sentenceOverride : null,
-		hasPreviewed: Boolean(value.hasPreviewed),
-		approved: Boolean(value.approved),
-		approvedAt: typeof value.approvedAt === "string" ? value.approvedAt : null
-	};
-}
-function parseBooks(raw) {
-	if (!raw) return [];
-	try {
-		const value = JSON.parse(raw);
-		if (!Array.isArray(value)) return [];
-		const books = [];
-		for (const item of value) {
-			if (!isRecord(item)) continue;
-			if (typeof item.id !== "string" || typeof item.name !== "string") continue;
-			const pages = (Array.isArray(item.pages) ? item.pages : []).map(parsePage).filter((p) => p !== null);
-			books.push({
-				id: item.id,
-				name: item.name,
-				createdAt: typeof item.createdAt === "string" ? item.createdAt : (/* @__PURE__ */ new Date(0)).toISOString(),
-				pages
-			});
-		}
-		return books;
-	} catch {
-		return [];
-	}
-}
-function serializeBooks(books) {
-	return JSON.stringify(books);
-}
-var STORAGE_KEY = "page-aloud:books:v1";
-var SAVE_DEBOUNCE_MS = 400;
-var saveTimer = null;
-function writeBooks(books) {
-	try {
-		window.localStorage.setItem(STORAGE_KEY, serializeBooks(books));
-		return null;
-	} catch {
-		return "This browser's local storage is full — the latest changes may not survive a reload.";
-	}
-}
-/** Debounce writes: word-by-word edits sync on every keystroke. */
-function schedulePersist(set, books) {
-	if (typeof window === "undefined") return;
-	if (saveTimer) clearTimeout(saveTimer);
-	saveTimer = setTimeout(() => {
-		saveTimer = null;
-		set({ persistError: writeBooks(books) });
-	}, SAVE_DEBOUNCE_MS);
-}
-function persistNow(books) {
-	if (saveTimer) {
-		clearTimeout(saveTimer);
-		saveTimer = null;
-	}
-	if (typeof window === "undefined") return null;
-	return writeBooks(books);
+var saveChain = Promise.resolve();
+/** Serialize writes so rapid edits (typing) don't race the server. */
+function enqueue(task, onError) {
+	saveChain = saveChain.then(task).then(() => void 0).catch(() => onError("Couldn't save — your latest change may not persist. Check the connection."));
 }
 var useBookStore = create((set, get) => ({
 	books: [],
@@ -627,68 +354,54 @@ var useBookStore = create((set, get) => ({
 	activeBookId: null,
 	hydrate: () => {
 		if (get().hydrated || typeof window === "undefined") return;
-		set({
-			books: parseBooks(window.localStorage.getItem(STORAGE_KEY)),
+		fetchBooks().then((books) => set({
+			books,
+			hydrated: true,
+			persistError: null
+		})).catch(() => set({
+			persistError: "Couldn't load your books. Is the app running?",
 			hydrated: true
-		});
+		}));
 	},
 	createBook: (name) => {
 		const book = createBook(name);
-		const books = [...get().books, book];
-		set({
-			books,
+		set((s) => ({
+			books: [...s.books, book],
 			activeBookId: book.id,
-			persistError: persistNow(books)
-		});
+			persistError: null
+		}));
+		enqueue(() => apiCreateBook(book.id, book.name), (m) => set({ persistError: m }));
 		return book.id;
 	},
 	deleteBook: (id) => {
-		const books = get().books.filter((b) => b.id !== id);
-		set({
-			books,
-			activeBookId: get().activeBookId === id ? null : get().activeBookId,
-			persistError: persistNow(books)
-		});
+		set((s) => ({
+			books: s.books.filter((b) => b.id !== id),
+			activeBookId: s.activeBookId === id ? null : s.activeBookId
+		}));
+		enqueue(() => apiDeleteBook(id), (m) => set({ persistError: m }));
 	},
 	openBook: (id) => {
 		if (get().books.some((b) => b.id === id)) set({ activeBookId: id });
 	},
 	closeBook: () => set({ activeBookId: null }),
 	upsertPage: (bookId, page) => {
-		const books = get().books.map((b) => b.id === bookId ? upsertBookPage(b, page) : b);
-		set({ books });
-		schedulePersist(set, books);
+		set((s) => ({ books: s.books.map((b) => b.id === bookId ? upsertBookPage(b, page) : b) }));
+		enqueue(() => apiUpsertPage(bookId, page), (m) => set({ persistError: m }));
 	},
 	movePage: (bookId, pageId, direction) => {
-		const books = get().books.map((b) => b.id === bookId ? moveBookPage(b, pageId, direction) : b);
-		set({
-			books,
-			persistError: persistNow(books)
-		});
+		const book = get().books.find((b) => b.id === bookId);
+		if (!book) return;
+		const next = moveBookPage(book, pageId, direction);
+		set((s) => ({ books: s.books.map((b) => b.id === bookId ? next : b) }));
+		enqueue(() => apiSetPageOrder(bookId, next.pages.map((p) => p.id)), (m) => set({ persistError: m }));
 	},
 	removePage: (bookId, pageId) => {
-		const books = get().books.map((b) => b.id === bookId ? removeBookPage(b, pageId) : b);
-		set({
-			books,
-			persistError: persistNow(books)
-		});
+		set((s) => ({ books: s.books.map((b) => b.id === bookId ? removeBookPage(b, pageId) : b) }));
+		enqueue(() => apiRemovePage(pageId), (m) => set({ persistError: m }));
 	}
 }));
 function useActiveBook() {
 	return useBookStore((s) => s.books.find((b) => b.id === s.activeBookId) ?? null);
-}
-/** Flush any pending debounced save; used when the tab is hidden/closed. */
-function flushBookPersistence() {
-	const { books } = useBookStore.getState();
-	if (books.length === 0 && saveTimer === null) return;
-	const error = persistNow(books);
-	if (error) useBookStore.setState({ persistError: error });
-}
-if (typeof window !== "undefined") {
-	window.addEventListener("beforeunload", flushBookPersistence);
-	document.addEventListener("visibilitychange", () => {
-		if (document.visibilityState === "hidden") flushBookPersistence();
-	});
 }
 var idleOcr = {
 	status: "idle",
@@ -1894,6 +1607,123 @@ function LibraryView() {
 		]
 	});
 }
+function ScoresView({ onBack }) {
+	const [scores, setScores] = (0, import_react.useState)(null);
+	const [error, setError] = (0, import_react.useState)(false);
+	(0, import_react.useEffect)(() => {
+		fetchScores().then(setScores).catch(() => setError(true));
+	}, []);
+	const byStudent = scores ? [...scores].sort((a, b) => a.studentName.localeCompare(b.studentName) || a.bookName.localeCompare(b.bookName)) : null;
+	const studentCount = scores ? new Set(scores.map((s) => s.studentName)).size : 0;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "mx-auto max-w-3xl",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex items-center gap-3",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
+					variant: "ghost",
+					size: "sm",
+					onClick: onBack,
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ArrowLeft, {}), "Library"]
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "font-display text-2xl font-medium tracking-tight",
+					children: "Student scores"
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-2 text-sm text-muted",
+				children: "Who read each book and how long it took. Names are typed by the student — no accounts."
+			}),
+			scores === null && !error && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-8 text-sm text-muted",
+				children: "Loading scores…"
+			}),
+			error && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-8 text-sm text-danger",
+				children: "Couldn't load scores. Please try again."
+			}),
+			scores !== null && scores.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mt-8 flex flex-col items-center rounded-2xl bg-surface px-6 py-12 text-center shadow-border",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "flex size-12 items-center justify-center rounded-lg bg-primary-soft text-primary",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Users, { className: "size-6" })
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-4 font-display text-lg font-medium tracking-tight",
+						children: "No reading yet"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-1 max-w-sm text-sm text-muted",
+						children: "Once a student finishes a book on the reading link, their name, time, and pages read show up here."
+					})
+				]
+			}),
+			byStudent && byStudent.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+				className: "mt-6 text-sm text-muted",
+				children: [
+					studentCount,
+					" student",
+					studentCount === 1 ? "" : "s",
+					" · ",
+					byStudent.length,
+					" book run",
+					byStudent.length === 1 ? "" : "s"
+				]
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+				className: "mt-3 grid gap-3",
+				children: byStudent.map((s) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+					className: "flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl bg-surface p-4 shadow-border",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "min-w-0 flex-1",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "truncate font-display text-lg font-medium tracking-tight",
+							children: s.studentName
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "truncate text-sm text-muted",
+							children: s.bookName
+						})]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex flex-wrap items-center gap-1.5",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Badge, {
+								variant: s.completedPages.length >= s.pageCount && s.pageCount > 0 ? "default" : "muted",
+								children: [
+									s.completedPages.length,
+									"/",
+									s.pageCount,
+									" pages"
+								]
+							}),
+							s.bestTimeMs !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Badge, {
+								variant: "outline",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Timer, { className: "mr-1 size-3" }),
+									"best ",
+									formatMs(s.bestTimeMs)
+								]
+							}),
+							s.timeMs !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Badge, {
+								variant: "muted",
+								children: ["last ", formatMs(s.timeMs)]
+							}),
+							s.runs > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Badge, {
+								variant: "muted",
+								children: [s.runs, " runs"]
+							})
+						]
+					})]
+				}, `${s.studentName}:${s.bookId}`))
+			})] })
+		]
+	});
+}
+function formatMs(ms) {
+	const total = Math.max(0, Math.round(ms / 1e3));
+	const m = Math.floor(total / 60);
+	const s = total % 60;
+	return `${m}:${String(s).padStart(2, "0")}`;
+}
 var STEPS = [
 	"Upload",
 	"Detect",
@@ -1916,6 +1746,7 @@ function TeacherApp() {
 	const setShowOrderEditor = usePageStore((s) => s.setShowOrderEditor);
 	const activeBook = useActiveBook();
 	const hydrate = useBookStore((s) => s.hydrate);
+	const [view, setView] = (0, import_react.useState)("books");
 	(0, import_react.useEffect)(() => {
 		hydrate();
 	}, [hydrate]);
@@ -1935,7 +1766,7 @@ function TeacherApp() {
 	]);
 	const editorOpen = Boolean(activeBook && image);
 	const stepIndex = !image ? 0 : ocr.status === "running" ? 1 : approved ? 4 : hasPreviewed ? 3 : 2;
-	const modeLabel = !activeBook ? "Your books" : !image ? `Add a page to “${activeBook.name}”` : showOrderEditor ? "Fixing reading order" : selectedId && editorMode === "pronunciation" ? "Fixing pronunciation" : selectedId ? "Fixing spelling" : playback.kind === "sentence" ? "Playing full sentence" : playback.kind === "word" ? "Playing a single word" : words.length > 0 ? "Tap a word to review it" : ocr.status === "running" ? "Detecting words" : "Upload a page to begin";
+	const modeLabel = view === "scores" ? "Student reading scores" : !activeBook ? "Your books" : !image ? `Add a page to “${activeBook.name}”` : showOrderEditor ? "Fixing reading order" : selectedId && editorMode === "pronunciation" ? "Fixing pronunciation" : selectedId ? "Fixing spelling" : playback.kind === "sentence" ? "Playing full sentence" : playback.kind === "word" ? "Playing a single word" : words.length > 0 ? "Tap a word to review it" : ocr.status === "running" ? "Detecting words" : "Upload a page to begin";
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "min-h-dvh bg-bg text-fg",
 		children: [
@@ -1945,16 +1776,26 @@ function TeacherApp() {
 					className: "mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between",
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 						className: "flex items-center gap-3",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-							className: "flex size-10 items-center justify-center rounded-md bg-primary text-primary-fg",
-							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BookOpen, { className: "size-5" })
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "font-display text-xl font-medium tracking-tight",
-							children: "Page Aloud"
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "text-sm text-muted",
-							children: "Teacher book studio"
-						})] })]
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "flex size-10 items-center justify-center rounded-md bg-primary text-primary-fg",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BookOpen, { className: "size-5" })
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "font-display text-xl font-medium tracking-tight",
+								children: "Page Aloud"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "text-sm text-muted",
+								children: "Teacher book studio"
+							})] }),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
+								variant: view === "scores" ? "secondary" : "ghost",
+								size: "sm",
+								className: "ml-2",
+								onClick: () => setView(view === "scores" ? "books" : "scores"),
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Users, {}), "Scores"]
+							})
+						]
 					}), editorOpen && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ol", {
 						className: "flex flex-wrap items-center gap-1 text-xs font-medium sm:text-sm",
 						children: STEPS.map((step, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
@@ -1983,13 +1824,26 @@ function TeacherApp() {
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("main", {
 				className: "mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8",
-				children: activeBook ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BookView, { book: activeBook }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LibraryView, {})
+				children: view === "scores" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ScoresView, { onBack: () => setView("books") }) : activeBook ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BookView, { book: activeBook }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LibraryView, {})
 			})
 		]
 	});
 }
 function Home() {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TeacherApp, {});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(TeacherGate, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TeacherApp, {}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("footer", {
+		className: "border-t border-border bg-surface",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "mx-auto flex max-w-7xl items-center justify-between px-4 py-3 text-xs text-subtle sm:px-6",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+				className: "inline-flex items-center gap-1.5",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(BookOpen, { className: "size-3.5" }), "Page Aloud — teacher studio"]
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link, {
+				to: "/read",
+				className: "font-medium text-primary hover:underline",
+				children: "Open student reading view"
+			})]
+		})
+	})] });
 }
 //#endregion
 export { Home as component };
